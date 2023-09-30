@@ -32,7 +32,6 @@
     import androidx.hilt.navigation.compose.hiltViewModel
     import androidx.navigation.NavController
     import androidx.navigation.compose.rememberNavController
-    import androidx.paging.compose.collectAsLazyPagingItems
     import com.example.estatebook_app.ui.theme.EstateBook_AppTheme
     import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
@@ -61,10 +60,11 @@
                       //        Estate_Images_ID = 1
                       //    ), modifier = Modifier.fillMaxWidth()
                       //)
-                      //SetupNavHost(  )
+
+                      //SetupNavHost()
                        val viewModel = hiltViewModel<EstateViewModel>()
-                       val estates = viewModel.estatePagingFlow.collectAsLazyPagingItems()
-                       MainPage( estates = estates)                     //RegisrationBox(navController)
+
+                       MainPage(viewModel)                    //RegisrationBox(navController)
                        //mainFunc(navController = navController)
                    }
                }
@@ -81,7 +81,7 @@ fun mainFunc(navController: NavController) {
 
     //firstSlide()
     //secondSlide()
-    val pagerState = rememberPagerState( 3)
+    val pagerState = rememberPagerState { 3 }
 
     Scroller(navController = navController, pagerState)
     CustomPageIndicator(

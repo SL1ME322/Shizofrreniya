@@ -11,7 +11,7 @@ fun EstatesMainDto.toEstateMainEntity(): EstateMainEntity { //функция р�
         Location = Location,
         Price = Price,
         Area = Area,
-        Rating = Rating
+        Rating = 0.0
         //Estate_Images_ID = Estate_Images_ID
     )
 }

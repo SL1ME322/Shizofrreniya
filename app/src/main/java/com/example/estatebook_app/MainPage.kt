@@ -30,16 +30,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.items
-import com.example.estatebook_app.data.remote.EstateMain
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MainPage(  estates : LazyPagingItems<EstateMain>) {
-    val pagerState = rememberPagerState (3)
+fun MainPage(viewModel: EstateViewModel) {
+    val pagerState = rememberPagerState { 3 }
     val context = LocalContext.current
+    val estates = viewModel.estatePagingFlow.collectAsLazyPagingItems()
     LaunchedEffect(key1 = estates.loadState) { //безопасный запуск корутины, если key изменяется - то launchedeffect перезапускается
         if (estates.loadState.refresh is LoadState.Error) {
             Toast.makeText(
@@ -64,7 +64,7 @@ fun MainPage(  estates : LazyPagingItems<EstateMain>) {
 
         Column() {
             Spacer(modifier = Modifier.fillMaxHeight(0.01f))
-            Row(horizontalArrangement = Arrangement.Center,  ) {
+            Row(horizontalArrangement = Arrangement.Center) {
                 val text = remember {
                     mutableStateOf("")
                 }
@@ -122,134 +122,66 @@ fun MainPage(  estates : LazyPagingItems<EstateMain>) {
                 fontWeight = FontWeight(400)
             )
 
-            Row() {
-                Column(modifier = Modifier.fillMaxWidth(0.55f)) {
-                    Row() {
-                        Spacer(modifier = Modifier.fillMaxWidth(0.1f))
-                        Box(
-                            modifier = Modifier.background(
-                                shape = RoundedCornerShape(30.dp),
-                                color = Color(219, 204, 125, 255)
-                            )
-                        ) {
-                            Row() {
 
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 11.dp)
-                                ) {
-
-                                    Image(
-                                        modifier = Modifier
-                                            .size(12.dp),
-
-                                        painter = painterResource(id = R.drawable.cross),
-                                        contentDescription = "dkskdsk"
-                                    )
-                                    Spacer(modifier = Modifier.fillMaxWidth(0.02f))
-                                    Text(text = "Тэг 1", fontSize = 20.sp)
-                                }
-
-
-                            }
-
-                        }
-                        Spacer(modifier = Modifier.fillMaxWidth(0.05f))
-                        Box(
-                            modifier = Modifier.background(
-                                shape = RoundedCornerShape(30.dp),
-                                color = Color(219, 204, 125, 255)
-                            )
-                        ) {
-                            Row() {
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.padding(horizontal = 11.dp)
-                                ) {
-
-                                    Image(
-                                        modifier = Modifier
-                                            .size(12.dp),
-
-                                        painter = painterResource(id = R.drawable.cross),
-                                        contentDescription = "dkskdsk"
-                                    )
-                                    Spacer(modifier = Modifier.fillMaxWidth(0.02f))
-                                    Text(text = "Тэг 1", fontSize = 20.sp)
-                                }
-
-
-                            }
-
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.fillMaxWidth(0.1f))
-                Column(modifier = Modifier.fillMaxWidth(0.9f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            modifier = Modifier.size(38.dp),
-                            painter = painterResource(id = R.drawable.filter),
-                            contentDescription = "ldld"
-                        )
-                        Text(text = "Фильтры", fontSize = 18.sp)
-                    }
-
-                }
-            }
-            Box(modifier = Modifier.fillMaxSize()){
-                if (estates.loadState.refresh is LoadState.Loading){
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-
-            }
+//            Box(modifier = Modifier.fillMaxSize()) {
+//                if (estates.loadState.refresh is LoadState.Loading) {
+//                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+//                }
+//
+//            }
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-               //items(estates) {  estate -> if (estate != null){
-               //    EstateItem(estate = estate, modifier = Modifier.fillMaxSize())
-               //}
-                items(estates) {//перебор листа
-                        estate ->
-                    if (estate != null) {
-                        EstateItem(estate = estate, modifier = Modifier.fillMaxWidth())
+                //items(estates) {  estate -> if (estate != null){
+                //    EstateItem(estate = estate, modifier = Modifier.fillMaxSize())
+                //} //rakom sakom
+                items(estates.itemCount, key = estates.itemKey { it.id }) {//перебор листа
+                        index ->
+                    val item = estates[index]
+                    if (item != null) {
+                       EstateItem(estate = item, modifier = Modifier.fillMaxWidth())
+                       //Box(modifier = Modifier
+                       //    .background(color = Color.Red)
+                       //    .fillMaxWidth()) {
+                       //    Text(text = item.Ad_Name)
+                       //}
                     }
                 }
-                item{
-                    if(estates.loadState.append is LoadState.Loading){
+                item {
+                    if (estates.loadState.append is LoadState.Loading) {
                         CircularProgressIndicator()
                     }
                 }
 
-                }
-
             }
 
-
         }
+
+
     }
+}
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Scroller4Images(pagerState: PagerState) {
-    HorizontalPager(state = pagerState, modifier = Modifier, pageCount = 3 ) { page ->
+    HorizontalPager(state = pagerState, modifier = Modifier) { page ->
         Row() {
             when (page) {
-                0 -> Box(modifier = Modifier.height(265.dp))  {
+                0 -> Box(modifier = Modifier.height(265.dp)) {
                     Image(
-                        painter = painterResource(id = R.drawable.estate1),modifier = Modifier.fillMaxSize(),
+                        painter = painterResource(id = R.drawable.estate1),
+                        modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.FillBounds,
                         contentDescription = "ccxc",
                     )
                 }
-                1 -> Box(modifier = Modifier.height(265.dp   )) {
+                1 -> Box(modifier = Modifier.height(265.dp)) {
                     Image(
                         painter = painterResource(id = R.drawable.estate2),
                         contentScale = ContentScale.FillBounds,
                         contentDescription = "ccxc", modifier = Modifier.fillMaxSize()
                     )
                 }
-                2 -> Box(modifier = Modifier.height(265.dp   ))  {
+                2 -> Box(modifier = Modifier.height(265.dp)) {
                     Image(
                         painter = painterResource(id = R.drawable.estate3),
                         contentScale = ContentScale.FillBounds,
@@ -270,37 +202,35 @@ fun CustomPageIndicatorMain(
     activeLineWidth: Float,
     dotWidth: Float,
     activeDotWidth: Float,
-    dotHeight:Float,
-    radius:CornerRadius,
+    dotHeight: Float,
+    radius: CornerRadius,
     modifier: Modifier
 
-){
-    Canvas(modifier = modifier ){
-        val totalWidth = (count *(dotWidth + circleSpacing) - circleSpacing)
+) {
+    Canvas(modifier = modifier) {
+        val totalWidth = (count * (dotWidth + circleSpacing) - circleSpacing)
         val startX = (size.width - totalWidth) / 2.2f
         var x = startX
         val y = size.height - dotHeight * 10
-        repeat(count){
-            i ->
+        repeat(count) { i ->
             val posOffset = pagerState.pageOffset
             val dotOffset = posOffset % 1
             val current = posOffset.toInt()
             val factor = (dotOffset * (activeDotWidth - dotWidth))
 
-            val color = if(i == current){
+            val color = if (i == current) {
                 Color(255, 255, 255, 92)
-            }
-            else{
+            } else {
                 Color(255, 255, 255, 92)
             }
 
-            val calculatedWidth = when{
+            val calculatedWidth = when {
                 i == current -> activeDotWidth - factor
                 i - 1 == current || (i == 0 && posOffset > count - 1) -> dotWidth + factor
                 else -> dotWidth
             }
 
-            drawIndicators2(x,y,calculatedWidth,dotHeight,radius,color)
+            drawIndicators2(x, y, calculatedWidth, dotHeight, radius, color)
             x += calculatedWidth + circleSpacing;
         }
     }
@@ -309,10 +239,9 @@ fun CustomPageIndicatorMain(
 
 @OptIn(ExperimentalFoundationApi::class)
 fun DrawScope.drawIndicators2(
-    x:Float,  y:Float, width: Float, height: Float, radius: CornerRadius, color: Color
-)
-{
-    val rect = RoundRect(x,y - height/2, x + width, y + height/2, radius)
+    x: Float, y: Float, width: Float, height: Float, radius: CornerRadius, color: Color
+) {
+    val rect = RoundRect(x, y - height / 2, x + width, y + height / 2, radius)
     val path = Path().apply { addRoundRect(rect) }
     drawPath(path = path, color = color)
 }

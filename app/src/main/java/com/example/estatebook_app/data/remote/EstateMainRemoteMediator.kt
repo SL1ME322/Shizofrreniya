@@ -28,8 +28,8 @@ import java.io.IOException
                     LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true ) //в приложении нет prepend
                     LoadType.APPEND ->{
                         val lastItem = state.lastItemOrNull() //последняя запись
-                        if(lastItem == null){
-                            1 // возвращение первой страницы
+                      if(lastItem == null){
+                            return MediatorResult.Success(endOfPaginationReached = true) // возвращение первой страницы
                         }
                         else {
                             (lastItem.id / state.config.pageSize) + 1

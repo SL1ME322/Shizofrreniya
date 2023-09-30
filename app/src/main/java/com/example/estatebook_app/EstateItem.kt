@@ -25,7 +25,7 @@ fun EstateItem(
     estate: EstateMain,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState (3)
+    val pagerState = rememberPagerState { 3 }
     Box(
         Modifier
             .clip(RoundedCornerShape(32.dp))
