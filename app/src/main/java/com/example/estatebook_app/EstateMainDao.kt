@@ -15,6 +15,11 @@ interface EstateMainDao {
     @Query("Select * from EstateMainEntity")
     fun pagingSource(): PagingSource<Int, EstateMainEntity> //метод вызова пагинированных данных из бд (номер, запись)
 
+    @Query("Select * from EstateMainEntity Where Ad_Name Like :ad_name")
+    fun searchByName(ad_name: String): PagingSource<Int, EstateMainEntity>
     @Query("Delete from EstateMainEntity")
     suspend fun clearAll()
+
+  // @Query("select * from EstateMainEntity where id = :id")
+  // suspend fun selectById(estateId:Int):EstateMainEntity?
 }

@@ -1,7 +1,7 @@
 package com.example.estatebook_app
 
 
-import androidx.compose.foundation.BorderStroke
+import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,12 +18,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.End
-import androidx.compose.ui.Alignment.Companion.TopEnd
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -35,7 +33,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.estatebook_app.data.remote.EstateAPI
+import com.example.estatebook_app.data.remote.TokenClass
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
+var token  = TokenClass("","")
 
 @Composable
 fun Authorize(navController: NavController){
@@ -58,6 +64,8 @@ fun Authorize(navController: NavController){
 
 @Composable
 fun AuthorizationBox(navController: NavController) {
+    val login by remember { mutableStateOf("")}
+    val password by remember { mutableStateOf("")}
     Column(  ) {
         Box(
             modifier = Modifier
@@ -217,7 +225,9 @@ fun AuthorizationBox(navController: NavController) {
                         .fillMaxWidth(0.7f)
                         .fillMaxHeight(0.16f),
                     colors = ButtonDefaults.buttonColors(Color(234, 168, 42, 255)),
-                    onClick = {navController.navigate("MainPage")}, shape = RoundedCornerShape(10.dp)
+                    onClick = {  Authenticate(text.value,password.value, navController)
+
+                         }, shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = "Войти", color = Color.Black, fontSize = 21.sp)
 
@@ -233,7 +243,6 @@ fun AuthorizationBox(navController: NavController) {
                         style = TextStyle(fontSize = 19.sp, color = Color.Blue),
                         onClick = {navController.navigate("Register")})
                 }
-
                 Spacer(modifier = Modifier.fillMaxHeight(0.12f))
                 Row( horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
 
@@ -290,4 +299,42 @@ fun AuthorizationBox(navController: NavController) {
 
 
     }
+}
+
+fun Authenticate(login:String, password:String, navController: NavController):TokenClass{
+
+    val retrofit = Retrofit.Builder()
+        .baseUrl(EstateAPI.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    val api = retrofit.create(EstateAPI::class.java)
+    val call: Call<TokenClass> = api.login_for_access_token(login, password)
+    call.enqueue(object : Callback<TokenClass> {
+        override fun onResponse(call: Call<TokenClass>, response: Response<TokenClass>) {
+            val tokenCode = response.code()
+            if (tokenCode != 200) {
+                Toast.makeText(
+                    navController.context,
+                    "Неверный логин или пароль!",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+
+                 token = response.body()!!
+
+                navController.navigate("MainPage")
+                Toast.makeText(navController.context, "Вы авторизовались!", Toast.LENGTH_LONG)
+                    .show()
+
+            }
+
+
+        }
+
+        override fun onFailure(call: Call<TokenClass>, t: Throwable) {
+            t.message
+        }
+
+    })
+    return token
 }

@@ -7,15 +7,19 @@ import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
 import com.example.estatebook_app.EstateDatabase
+import com.example.estatebook_app._searchQuery
 import com.example.estatebook_app.data.local.EstateMainEntity
 import com.example.estatebook_app.toEstateMainEntity
+import kotlinx.coroutines.delay
 import retrofit2.HttpException
 import java.io.IOException
 
+var name = ""
 @OptIn(ExperimentalPagingApi::class)
  class EstateMainRemoteMediator ( //remote mediator нужен для загрузки данных из api в db с пагинацией
     private val estateDb : EstateDatabase,
-    private val estateApi: EstateAPI
+    private val estateApi: EstateAPI,
+
 ):RemoteMediator<Int, EstateMainEntity>(){ //<номер страницы, тип данных>
     @RequiresApi(34)
     override suspend fun load(
@@ -32,12 +36,13 @@ import java.io.IOException
                             return MediatorResult.Success(endOfPaginationReached = true) // возвращение первой страницы
                         }
                         else {
-                            (lastItem.id / state.config.pageSize) + 1
-                        }
+                            (lastItem.ID_Estate / state.config.pageSize) + 1
+                        } 
                     }
             }
-           // delay(2000)
-            val estates = estateApi.getEstatesMainPage(page = loadKey, items_per_page = state.config.pageSize) //лист из api
+            delay(2000)
+
+            val estates = estateApi.getEstatesMainPage(page = loadKey, items_per_page = state.config.pageSize, _searchQuery.value) //лист из api
             estateDb.withTransaction { //with transaction для нескольких команд sql (либо все будут выполнены, либо ни одна)
                 if(loadType == LoadType.REFRESH){ //очистка кэша при обновлении
                     estateDb.dao.clearAll()
@@ -48,6 +53,7 @@ import java.io.IOException
             MediatorResult.Success(
                 endOfPaginationReached = estates.isEmpty() //проверка api листа на пустоту
             )
+
         }
         catch (e: IOException){ // ошибка при чтении-записи
             MediatorResult.Error(e)
@@ -57,4 +63,5 @@ import java.io.IOException
             MediatorResult.Error(e)
         }
     }
+
 }

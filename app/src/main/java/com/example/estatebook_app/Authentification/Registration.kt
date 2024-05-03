@@ -1,12 +1,10 @@
 package com.example.estatebook_app
 
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,14 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.End
 import androidx.compose.ui.Alignment.Companion.Start
-import androidx.compose.ui.Alignment.Companion.TopEnd
-import androidx.compose.ui.Alignment.Companion.TopStart
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -37,12 +32,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.estatebook_app.data.remote.EstateAPI
+import com.example.estatebook_app.data.remote.UserMain
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Inject
 
-
+class Registration @Inject constructor(private val estateAPI: EstateAPI)
 @Composable
 fun Register(navController: NavController){
 
@@ -54,12 +56,10 @@ fun Register(navController: NavController){
     )
     {
         MaterialTheme(   ) {
-
-            RegisrationBox(navController)
+            RegisrationBox(navController )
         }
 
     }
-
 }
 
 @Composable
@@ -75,12 +75,17 @@ fun CustomCheckBox() {
                 onClick = {   checked =! checked})
         }
     }
-
-
 }
 
 @Composable
-fun RegisrationBox(navController: NavController) {
+fun RegisrationBox(navController: NavController ) {
+
+    val retrofit = Retrofit.Builder() //!!!СДЕЛАЙ ВЫЗОВ АПИ С ПОМОЩЬЮ INJECTION !!!!!
+        .baseUrl("http://10.0.2.2:8000/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+    val api = retrofit.create(EstateAPI::class.java)
+
     Column(  ) {
         Box(
             modifier = Modifier
@@ -89,6 +94,7 @@ fun RegisrationBox(navController: NavController) {
                 .weight(0.2f)
                 .background(Color(131, 171, 231, 255)),
         ) {
+
             Image(
                 painter = painterResource(id = R.drawable.house_estate),
                 modifier = Modifier
@@ -96,15 +102,11 @@ fun RegisrationBox(navController: NavController) {
                     .offset(0.dp, 10.dp)
                     .scale(scaleX = 1.15f, scaleY = 1.12f)
                     .fillMaxWidth(),
-
                 contentDescription = "city",
                 contentScale = ContentScale.FillBounds
-
             )
         }
-
         Box(
-
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .weight(0.55f)
@@ -124,7 +126,6 @@ fun RegisrationBox(navController: NavController) {
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-
                 ) {
                     val path = Path()
                     path.moveTo(0f, size.height )
@@ -330,7 +331,10 @@ fun RegisrationBox(navController: NavController) {
                         .fillMaxWidth(0.7f)
                         .fillMaxHeight(0.25f),
                     colors = ButtonDefaults.buttonColors(Color(234, 168, 42, 255)),
-                    onClick = {navController.navigate("MainPage")}, shape = RoundedCornerShape(10.dp)
+                    onClick = {
+                        CreateUser(text.value,password.value)
+                        navController.navigate("Authorize")
+                              }, shape = RoundedCornerShape(10.dp)
                 ) {
                     Text(text = "Зарегистрироваться", color = Color.Black, fontSize = 21.sp)
 
@@ -374,4 +378,23 @@ fun RegisrationBox(navController: NavController) {
 
 
     }
+}
+fun CreateUser(login:String, password:String){
+    val retrofit = Retrofit.Builder()
+        .baseUrl(EstateAPI.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val api = retrofit.create(EstateAPI::class.java)
+    val user = UserMain(2, login, password,
+        "https://images.ctfassets.net/sfnkq8lmu5d7/1NaIFGyBn0qwXYlNaCJSEl/ad59ce5eefa3c2322b696778185cc749/2021_0825_Kitten_Health.jpg?w=1000&h=750&q=70&fm=webp",
+        "dsds","dsds")
+    val call: Call<UserMain> = api.register_new_user(user)
+    call.enqueue(object: Callback<UserMain> {
+        override fun onResponse(call: Call<UserMain>, response: Response<UserMain>) {
+
+        }
+        override fun onFailure(call: Call<UserMain>, t: Throwable) {
+        }
+    } )
 }

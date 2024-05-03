@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\app",
+    "\\app\\sampledata",
+    "\\app\\src",
+    "\\app\\src\\main",
+    "\\app\\src\\main\\java",
+    "\\app\\src\\main\\java\\com",
+    "\\app\\src\\main\\java\\com\\example",
+    "\\app\\src\\main\\java\\com\\example\\estatebook_app",
+    "\\app\\src\\main\\java\\com\\example\\estatebook_app\\usefulwidgets"
+  ],
+  "SelectedNode": "\\app\\src\\main\\java\\com\\example\\estatebook_app\\Scroller4Images.kt",
+  "PreviewInSolutionExplorer": false
+}

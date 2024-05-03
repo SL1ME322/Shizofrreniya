@@ -1,6 +1,6 @@
 package com.example.estatebook_app.data.remote
 
-data class EstateMain(
+data class EstateForPost(
     val ID_Estate: Int,
     val Ad_Name: String,
     val Location: String,
@@ -12,8 +12,8 @@ data class EstateMain(
     val Metro_Station: String,
     val Train_Station: String,
     val Description: String,
-    val Ad_Date: String?,
-    val Building_Date: String?,
+    val Ad_Date: String,
+    val Building_Date: String,
     val Status: String,
     //val Estate_Rating: Int,
     val Estate_Images_ID: Int,

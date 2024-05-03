@@ -1,5 +1,4 @@
     package com.example.estatebook_app
-
     import android.os.Bundle
     import androidx.activity.ComponentActivity
     import androidx.activity.compose.setContent
@@ -9,6 +8,7 @@
     import androidx.compose.foundation.Image
     import androidx.compose.foundation.background
     import androidx.compose.foundation.layout.*
+    import androidx.compose.foundation.pager.HorizontalPager
     import androidx.compose.foundation.pager.PagerState
     import androidx.compose.foundation.pager.rememberPagerState
     import androidx.compose.material.*
@@ -37,6 +37,9 @@
 @AndroidEntryPoint
 
     class MainActivity : ComponentActivity() {
+        companion object{
+            var accessToken =""
+        }
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             setContent {
@@ -49,6 +52,7 @@
                        color = Color(171, 238, 203, 255)
                    )
                    {
+
                       //EstateItem(
                       //    estate = EstateMain(
                       //        id = 1,
@@ -61,10 +65,10 @@
                       //    ), modifier = Modifier.fillMaxWidth()
                       //)
 
-                      //SetupNavHost()
+                       SetupNavHost()
                        val viewModel = hiltViewModel<EstateViewModel>()
 
-                       MainPage(viewModel)                    //RegisrationBox(navController)
+                      // MainPage(viewModel)                    //RegisrationBox(navController)
                        //mainFunc(navController = navController)
                    }
                }
@@ -83,7 +87,7 @@ fun mainFunc(navController: NavController) {
     //secondSlide()
     val pagerState = rememberPagerState { 3 }
 
-    Scroller(navController = navController, pagerState)
+
     CustomPageIndicator(
         pagerState,
         3,
@@ -95,6 +99,7 @@ fun mainFunc(navController: NavController) {
         CornerRadius(120f),
         modifier = Modifier
     )
+    Scroller(navController = navController, pagerState)
     //LazyRow(){
     //    items(3){
     //        page -> when (page){
@@ -457,18 +462,16 @@ fun Scroller(navController: NavController,
 ){
 
 
-    //HorizontalPager(state = pagerState ) {
-    //    page ->  Row() {
-    //    when (page){
-    //       0 -> firstSlide()
-    //        1 ->          secondSlide()
-    //        2 ->          thirdSlider(navController)
-    //    }
-//
-    //
-    //}
-        
+    HorizontalPager(state = pagerState ) {
+        page ->  Row() {
+        when (page){
+           0 -> firstSlide()
+            1 ->          secondSlide()
+            2 ->          thirdSlider(navController)
+        }
 
+
+    }
    // LazyRow(modifier = Modifier.fillMaxWidth()){
    //     items(3){ index -> when (index){
    //         0 -> Box(modifier = Modifier.fillMaxSize()){
@@ -479,4 +482,4 @@ fun Scroller(navController: NavController,
    //     }
    //     }
    // }
-}
+}}

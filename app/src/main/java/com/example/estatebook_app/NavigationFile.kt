@@ -1,28 +1,25 @@
 package com.example.estatebook_app
 
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navigation
-import androidx.paging.compose.LazyPagingItems
 import com.example.estatebook_app.data.remote.EstateMain
-import com.example.estatebook_app.data.remote.EstateMainRemoteMediator
+import com.squareup.moshi.Moshi
 
 
 @Composable
 fun SetupNavHost( ){
     val navController = rememberNavController()
+    val viewModel = hiltViewModel<EstateViewModel>()
 
     //val viewModel = hiltViewModel<EstateViewModel>()
     NavHost(
         navController = navController,
-        startDestination = "MainPage")
+        startDestination = "Welcome_Screen")
     {
-        var estates =
+
         composable("Welcome_Screen") {
             mainFunc(navController)
         }
@@ -31,12 +28,31 @@ fun SetupNavHost( ){
         }
         composable("Register") {
             Register(navController)
+
         }
-       //composable("MainPage"){
-       //    MainPage(navController  )
-       //}
+        composable(
+            "EstatePage/estate={estate}"
+
+        ) {
+          navBackStackEntry ->  val estateJson = navBackStackEntry.arguments?.getString("estate")
+            val moshi = Moshi.Builder().build()
+            val jsonAdapter = moshi.adapter(EstateMain::class.java).lenient()
+            val estateMainObj = jsonAdapter.fromJson(estateJson)
+            EstatePage(estate = estateMainObj, navController = navController)
+        }
+        composable("MainPage") {
+            MainPage(viewModel, navController)
+        }
+        composable("AddEstate") {
+            addEstate2(navController)
+        }
+        composable("ProfilePage/{id}") {navBackStackEntry ->
+            val id = navBackStackEntry.arguments?.getString("id")?.toIntOrNull()
+            ProfilePage(navController,id )
+        }
+        composable("MyProfilePage") {
+            MyProfilePage(navController)
+        }
     }
 
 }
-
-
