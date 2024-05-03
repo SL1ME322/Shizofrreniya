@@ -10,6 +10,7 @@ interface EstateAPI {
         @Path("id") id: Int
     ): Response<UserProfile>
 
+    
     @GET("usersEstates")
     suspend fun usersEstates(
         @Query("id") id: Int
