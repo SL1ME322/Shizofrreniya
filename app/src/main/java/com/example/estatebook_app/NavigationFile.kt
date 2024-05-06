@@ -17,6 +17,7 @@ fun SetupNavHost( ){
     //val viewModel = hiltViewModel<EstateViewModel>()
     NavHost(
         navController = navController,
+        //startDestination = "Welcome_Screen")
         startDestination = "Welcome_Screen")
     {
 

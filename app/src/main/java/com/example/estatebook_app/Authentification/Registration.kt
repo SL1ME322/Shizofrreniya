@@ -36,12 +36,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.estatebook_app.data.remote.EstateAPI
+import com.example.estatebook_app.data.remote.RoleEnum
+import com.example.estatebook_app.data.remote.StatusEnum
 import com.example.estatebook_app.data.remote.UserMain
+import com.google.gson.GsonBuilder
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class Registration @Inject constructor(private val estateAPI: EstateAPI)
@@ -379,22 +386,154 @@ fun RegisrationBox(navController: NavController ) {
 
     }
 }
-fun CreateUser(login:String, password:String){
-    val retrofit = Retrofit.Builder()
-        .baseUrl(EstateAPI.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+//fun CreateUser(login:String, password:String){
+//    val retrofit = Retrofit.Builder()
+//        .baseUrl(EstateAPI.BASE_URL)
+//        .addConverterFactory(GsonConverterFactory.create())
+//        .build()
+//
+//    val api = retrofit.create(EstateAPI::class.java)
+//    val user = UserMain(2, login, password,
+//        "https://images.ctfassets.net/sfnkq8lmu5d7/1NaIFGyBn0qwXYlNaCJSEl/ad59ce5eefa3c2322b696778185cc749/2021_0825_Kitten_Health.jpg?w=1000&h=750&q=70&fm=webp",
+//        "dsds","dsds");
+//    val call: Call<UserMain> = api.register_new_user(user)
+//    call.enqueue(object: Callback<UserMain> {
+//        override fun onResponse(call: Call<UserMain>, response: Response<UserMain>) {
+//
+//        }
+//        override fun onFailure(call: Call<UserMain>, t: Throwable) {
+//        }
+//    } )
+//}
 
-    val api = retrofit.create(EstateAPI::class.java)
-    val user = UserMain(2, login, password,
-        "https://images.ctfassets.net/sfnkq8lmu5d7/1NaIFGyBn0qwXYlNaCJSEl/ad59ce5eefa3c2322b696778185cc749/2021_0825_Kitten_Health.jpg?w=1000&h=750&q=70&fm=webp",
-        "dsds","dsds")
-    val call: Call<UserMain> = api.register_new_user(user)
-    call.enqueue(object: Callback<UserMain> {
-        override fun onResponse(call: Call<UserMain>, response: Response<UserMain>) {
+//fun CreateUser(login: String, password: String) {
+//    try {
+//        val gson = GsonBuilder().setLenient().create()
+//
+//        val retrofit = Retrofit.Builder()
+//            .baseUrl(EstateAPI.BASE_URL)
+//            .addConverterFactory(GsonConverterFactory.create(gson))
+//            .build()
+//
+//        val api = retrofit.create(EstateAPI::class.java)
+//        val user = UserMain(
+//               login = login,
+//            password = password,
+//            name = "Роман",
+//            surname = "Зюзин",
+//            middleName = "Андреевич",
+//            avatar = "default_avatar.jpg",
+//            phone = "+7-915-123-125-64",
+//            location = "г.Москва, ул. Пушкина 10",
+//            description = "Риэлтор недвижимости; 7 лет опыта",
+//            averageMark = 4f,
+//            registrationDate = LocalDateTime.now(),
+//            status =  StatusEnum.ONLINE ,
+//            isBanned = false,
+//            roles =   RoleEnum.USER  ,
+//
+//            bannedUntilDate = null,
+//            complaintAmounts = null
+//        )
+//        println("Итоговый JSON перед отправкой: ${gson.toJson(user)}")
+////        println("User JSON: ${Gson().toJson(user)}")
+//        println(user.status);
+//        println(user.roles);
+//        val call: Call<UserMain> = api.register_new_user(user)
+//        call.enqueue(object : Callback<UserMain> {
+//            override fun onResponse(call: Call<UserMain>, response: Response<UserMain>) {
+//                val responseBody = response.body()
+//                if (response.isSuccessful && responseBody != null) {
+//                    // Registration successful
+//                    // Handle success as per your app logic
+//                } else {
+//                    // Registration failed
+//                    // Handle failure as per your app logic
+//                    val errorBody = response.errorBody()?.string()
+//                    println("Error Body: $errorBody")
+//                }
+//                println("Response Code: ${response.code()}")
+//                println("Response Message: ${response.message()}")
+//                println("Response Headers: ${response.headers()}")
+//            }
+//
+//            override fun onFailure(call: Call<UserMain>, t: Throwable) {
+//                // Registration request failed
+//                // Handle failure as per your app logic
+//                t.printStackTrace()
+//            }
+//        })
+//    } catch (e: Exception) {
+//        // Handle any exceptions that occur during registration
+//        // Log the exception or perform appropriate error handling
+//        e.printStackTrace()
+//    }
+//}
 
-        }
-        override fun onFailure(call: Call<UserMain>, t: Throwable) {
-        }
-    } )
+fun CreateUser(login: String, password: String) {
+    try {
+        val gson = GsonBuilder()
+            .setLenient()
+            .create()
+        val interceptor = HttpLoggingInterceptor()
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY)
+        val client: OkHttpClient = OkHttpClient.Builder()
+            .addInterceptor(interceptor)
+            .retryOnConnectionFailure(true)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .build()
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl(EstateAPI.BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+
+        val api = retrofit.create(EstateAPI::class.java)
+
+        val user = UserMain(
+            login = login,
+            password = password,
+            name = "Роман",
+            surname = "Зюзин",
+            middleName = "Андреевич",
+            avatar = "default_avatar.jpg",
+            phone = "+7-915-123-125-64",
+            location = "г.Москва, ул. Пушкина 10",
+            description = "Риэлтор недвижимости; 7 лет опыта",
+            averageMark = 4f,
+            registrationDate = null,
+            status = StatusEnum.ONLINE,
+            isBanned = false,
+            roles = RoleEnum.USER,
+            bannedUntilDate = null,
+            complaintAmounts = 2
+        )
+
+        val call: Call<ResponseBody> = api.register_new_user(login, password, user)
+        call.enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    val responseBody = response.body()?.string()
+                    println("Response Body: $responseBody")
+                    // Обработайте текстовый ответ здесь
+                } else {
+                    // Обработка неудачной регистрации
+                    val errorBody = response.errorBody()?.string()
+                    println("Error Body: $errorBody")
+                }
+                println("Response Code: ${response.code()}")
+                println("Response Message: ${response.message()}")
+                println("Response Headers: ${response.headers()}")
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                // Обработка ошибки при регистрации
+                t.printStackTrace()
+            }
+        })
+    } catch (e: Exception) {
+        // Обработка исключений при регистрации
+        e.printStackTrace()
+    }
 }

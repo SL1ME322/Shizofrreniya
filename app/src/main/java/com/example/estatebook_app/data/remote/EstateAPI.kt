@@ -1,16 +1,24 @@
 package com.example.estatebook_app.data.remote
 
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.*
 
 interface EstateAPI {
+    @GET("/users")
+    suspend fun getAllUsers(): Response<List<UserMain>>
     @GET("getUserById/{id}")
     suspend fun getUserById(
         @Path("id") id: Int
     ): Response<UserProfile>
+    @FormUrlEncoded
+    @POST("login")
+    abstract fun login(
+        @Field("username") username: String,
+        @Field("password") password: String
+    ): Call<Any>
 
-    
     @GET("usersEstates")
     suspend fun usersEstates(
         @Query("id") id: Int
@@ -30,17 +38,19 @@ interface EstateAPI {
    abstract fun addEstate(
      @Body estateMain: EstateForPost
    ) : Call<EstateForPost>
-    @POST("register_new_user/")
-    abstract fun register_new_user(
-        @Body userMain: UserMain
-    ) : Call<UserMain>
-    @GET("getEstatesOnMainPage")
-    suspend fun getEstatesMainPage( //асинхронная функция которая может быть остановлена и продолжена позже
+        @POST("/register")
+        abstract fun register_new_user(
+            @Query("login") login: String,
+            @Query("password") password: String,
+            @Body userMain: UserMain
+        ) : Call<ResponseBody>
+    @GET("/estates/getEstatesOnMainPage")
+    suspend fun getEstatesMainPage(
         @Query("page") page: Int,
         @Query("items_per_range") items_per_page: Int,
         @Query("search") name: String?,
-    ): List<EstatesMainDto> //возвращаемый тип
+    ): Response<List<EstatesMainDto>>
     companion object{ //статическое поле-компаньон
-        const val BASE_URL = "http://10.0.2.2:8000/"
+        const val BASE_URL = "http://10.0.2.2:8080"
     }
 }

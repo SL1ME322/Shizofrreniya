@@ -1,6 +1,8 @@
 package com.example.estatebook_app
 
 
+import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -17,7 +19,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.End
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -29,17 +30,25 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.estatebook_app.data.remote.EstateAPI
 import com.example.estatebook_app.data.remote.TokenClass
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 var token  = TokenClass("","")
 
@@ -66,6 +75,10 @@ fun Authorize(navController: NavController){
 fun AuthorizationBox(navController: NavController) {
     val login by remember { mutableStateOf("")}
     val password by remember { mutableStateOf("")}
+    val coroutineScope = rememberCoroutineScope()
+    var apiUrl by remember { mutableStateOf(TextFieldValue("https://api.api-ninjas.com/v1/aircraft?manufacturer=Gulfstream")) }
+    var apiKey by remember { mutableStateOf("1SWviemGM6duZ8HbHHr4YA==1cf65DmPvYOsPd6k") }
+    var isConnected by remember { mutableStateOf(false) }
     Column(  ) {
         Box(
             modifier = Modifier
@@ -214,12 +227,12 @@ fun AuthorizationBox(navController: NavController) {
                     else
                         PasswordVisualTransformation()
                 )
-                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
-                Box( modifier = Modifier.align(End)) {
-                    Text(modifier = Modifier.offset(-20.dp, 0.dp),color = Color.Blue, fontSize = 18.sp,  text = "Забыли пароль ?",  )
-                }
-
-                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+//                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
+//                Box( modifier = Modifier.align(End)) {
+//                    Text(modifier = Modifier.offset(-20.dp, 0.dp),color = Color.Blue, fontSize = 18.sp,  text = "Забыли пароль ?",  )
+//                }
+//
+//                Spacer(modifier = Modifier.fillMaxHeight(0.05f))
                 Button(
                     modifier = Modifier
                         .fillMaxWidth(0.7f)
@@ -231,6 +244,24 @@ fun AuthorizationBox(navController: NavController) {
                 ) {
                     Text(text = "Войти", color = Color.Black, fontSize = 21.sp)
 
+                }
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .fillMaxHeight(0.16f),
+                    colors = ButtonDefaults.buttonColors(Color(234, 168, 42, 255)),
+                    onClick = {
+                        coroutineScope.launch {
+                            // Call checkConnectionToAPI function within a coroutine scope
+                            //isConnected = checkConnectionToAPI(apiUrl.text, apiKey)
+                            //checkServerAvailability()
+                            getJsonDataFromServer("http://10.0.2.2:8080/estates/getEstatesOnMainPage?page=1&items_per_range=10&search=");
+                            Authenticate(login, password.value, navController);
+                        }
+                    },
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(text = "Вывести", color = Color.Black, fontSize = 21.sp)
                 }
                 Spacer(modifier = Modifier.fillMaxHeight(0.12f))
                 Row(){
@@ -301,40 +332,141 @@ fun AuthorizationBox(navController: NavController) {
     }
 }
 
-fun Authenticate(login:String, password:String, navController: NavController):TokenClass{
+suspend fun checkConnectionToAPI(apiUrl: String, apiKey: String): Boolean {
+    val client = OkHttpClient()
 
-    val retrofit = Retrofit.Builder()
-        .baseUrl(EstateAPI.BASE_URL)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-    val api = retrofit.create(EstateAPI::class.java)
-    val call: Call<TokenClass> = api.login_for_access_token(login, password)
-    call.enqueue(object : Callback<TokenClass> {
-        override fun onResponse(call: Call<TokenClass>, response: Response<TokenClass>) {
-            val tokenCode = response.code()
-            if (tokenCode != 200) {
-                Toast.makeText(
-                    navController.context,
-                    "Неверный логин или пароль!",
-                    Toast.LENGTH_LONG
-                ).show()
+    return try {
+        val request = Request.Builder()
+            .url( "https://api.api-ninjas.com/v1/aircraft?manufacturer=Gulfstream&model=G550")
+            .addHeader("X-Api-Key", apiKey)
+
+            .build()
+
+        withContext(Dispatchers.IO) {
+            val response = client.newCall(request).execute()
+            val responseCode = response.code
+            println("Response Code: $responseCode")
+            println("Response Code: ${response.message}")
+            println("Response Code: ${response.body}")
+            println("Response Code: ${response.isSuccessful}")
+            responseCode == 200
+        }
+    } catch (e: IOException) {
+        println("Exception: ${e.message}")
+        println("Exception: ${e.message}")
+        println("Exception: ${e.cause}")
+        println("Exception: ${e.stackTrace}")
+        println("Exception: ${e.localizedMessage}")
+        false
+    }
+}
+suspend fun getUsersFromApi() {
+    try {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:8080")
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(OkHttpClient()) // Добавляем клиент OkHttp
+            .build()
+        val api = retrofit.create(EstateAPI::class.java)
+        val response = withContext(Dispatchers.IO) {
+            api.getAllUsers()
+        }
+        if (response.isSuccessful) {
+            val users = response.body()
+            users?.forEach {
+                println(it) // Вывод пользователей в консоль
+            }
+        } else {
+            println("Ошибка при получении пользователей: ${response.code()}")
+        }
+    } catch (e: Exception) {
+        println("Произошла ошибка: ${e.message}")
+    }
+}
+suspend fun checkServerAvailability(): Boolean {
+    val client = OkHttpClient()
+    return withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("http://10.0.2.2:8000/")
+
+                .build()
+
+            val response = client.newCall(request).execute()
+            val responseCode = response.code
+            println("Response Code: $responseCode")
+            responseCode == 200
+        } catch (e: IOException) {
+            println("Exception: ${e.message}")
+            false
+        }
+    }
+}
+
+fun Authenticate(login: String, password: String, navController: NavController) {
+    GlobalScope.launch(Dispatchers.IO) {
+        try {
+
+            val url = URL("${EstateAPI.BASE_URL}/login")
+            val connection = url.openConnection() as HttpURLConnection
+
+
+            connection.requestMethod = "POST"
+
+
+            val authHeaderValue = "Basic " + Base64.encodeToString("$login:$password".toByteArray(), Base64.NO_WRAP)
+            connection.setRequestProperty("Authorization", authHeaderValue)
+
+
+            val responseCode = connection.responseCode
+            val responseMessage = connection.responseMessage
+            val reader = BufferedReader(InputStreamReader(connection.inputStream))
+            val response = StringBuilder()
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                response.append(line)
+            }
+            reader.close()
+
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                withContext(Dispatchers.Main) {
+                    navController.navigate("MainPage")
+                    Toast.makeText(navController.context, "Вы авторизовались!", Toast.LENGTH_LONG).show()
+                }
             } else {
 
-                 token = response.body()!!
-
-                navController.navigate("MainPage")
-                Toast.makeText(navController.context, "Вы авторизовались!", Toast.LENGTH_LONG)
-                    .show()
-
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(navController.context, "Ошибка аутентификации: $responseMessage", Toast.LENGTH_LONG).show()
+                }
             }
-
-
+        } catch (e: IOException) {
+            Log.e("Authenticate", "Exception: ${e.message}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(navController.context, "Произошла ошибка: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
-
-        override fun onFailure(call: Call<TokenClass>, t: Throwable) {
-            t.message
-        }
-
-    })
-    return token
+    }
 }
+
+fun getJsonDataFromServer(url: String) {
+    val client = OkHttpClient()
+
+    val request = Request.Builder()
+        .url(url)
+        .build()
+
+    client.newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            println("Failed to execute request: ${e.message}")
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            val responseData = response.body?.string()
+            println("Response JSON data:")
+            println(responseData)
+        }
+    })
+}
+

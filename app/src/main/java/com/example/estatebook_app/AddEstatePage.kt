@@ -126,26 +126,26 @@ fun addEstate2(navController: NavController) {
             )
             Button(onClick = {
 
-                AddEstate(estate = EstateForPost(
-                    1,
-                    Ad_Name = adname,
-                    Location = location,
-                    Price = price.toInt(),
-                    Price_For_Month = priceForMonth.toInt(),
-                    Mortgage_Price = mortgagePrice.toInt(),
-                    Area = area.toInt(),
-                    House_Area = house_area.toInt(),
-                    Metro_Station = metro_station,
-                    Train_Station = train_station,
-                    Description = description,
-                    // Укажите остальные поля в соответствии с введенными данными
-                     Ad_Date = "2021-12-12", // Пример, если это поле имеет тип String?
-                    Building_Date = "2021-12-12", // Пример, если это поле имеет тип String?
-                    Status = status,
-                    //Estate_Rating = rating.toInt(),
-                    Estate_Images_ID = estateImages.toInt(),
-                    User_ID = user_ID.toInt()
-                ))
+//                AddEstate(estate = EstateForPost(
+//                    1,
+//                    Ad_Name = adname,
+//                    Location = location,
+//                    Price = price.toInt(),
+//                    Price_For_Month = priceForMonth.toInt(),
+//                    Mortgage_Price = mortgagePrice.toInt(),
+//                    Area = area.toInt(),
+//                    House_Area = house_area.toInt(),
+//                    Metro_Station = metro_station,
+//                    Train_Station = train_station,
+//                    Description = description,
+//                    // Укажите остальные поля в соответствии с введенными данными
+//                     Ad_Date = "2021-12-12", // Пример, если это поле имеет тип String?
+//                    Building_Date = "2021-12-12", // Пример, если это поле имеет тип String?
+//                    Status = status,
+//                    //Estate_Rating = rating.toInt(),
+//                    Estate_Images_ID = estateImages.toInt(),
+//                    User_ID = user_ID.toInt()
+//                ))
             }) {
 
             Text("Добавить")

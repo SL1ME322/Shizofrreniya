@@ -26,6 +26,7 @@ object AppModule {
     @Singleton
     fun provideEstateDatabase(@ApplicationContext context: Context): EstateDatabase {
         return Room.databaseBuilder(context, EstateDatabase::class.java, "estates.db")
+            .fallbackToDestructiveMigration()
             .build()
     }
 

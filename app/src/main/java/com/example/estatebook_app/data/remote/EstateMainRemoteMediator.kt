@@ -1,6 +1,5 @@
 package com.example.estatebook_app.data.remote
 
-import androidx.annotation.RequiresApi
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -12,56 +11,58 @@ import com.example.estatebook_app.data.local.EstateMainEntity
 import com.example.estatebook_app.toEstateMainEntity
 import kotlinx.coroutines.delay
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 
 var name = ""
 @OptIn(ExperimentalPagingApi::class)
- class EstateMainRemoteMediator ( //remote mediator нужен для загрузки данных из api в db с пагинацией
+class EstateMainRemoteMediator (
     private val estateDb : EstateDatabase,
-    private val estateApi: EstateAPI,
-
-):RemoteMediator<Int, EstateMainEntity>(){ //<номер страницы, тип данных>
-    @RequiresApi(34)
+    private val estateApi: EstateAPI
+): RemoteMediator<Int, EstateMainEntity>() {
     override suspend fun load(
-        loadType: LoadType, //разные типы загрузки (refresh, prepend, append)
+        loadType: LoadType,
         state: PagingState<Int, EstateMainEntity>
-    ): MediatorResult { //результат загрузки данных
-        return try{
-            val loadKey = when(loadType){ //аналог switch
-                LoadType.REFRESH -> 1 //при обновлении возвращение к 1 стр
-                    LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true ) //в приложении нет prepend
-                    LoadType.APPEND ->{
-                        val lastItem = state.lastItemOrNull() //последняя запись
-                      if(lastItem == null){
-                            return MediatorResult.Success(endOfPaginationReached = true) // возвращение первой страницы
-                        }
-                        else {
-                            (lastItem.ID_Estate / state.config.pageSize) + 1
-                        } 
+    ): MediatorResult {
+        return try {
+            val loadKey = when(loadType){
+                LoadType.REFRESH -> 1
+                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true )
+                LoadType.APPEND -> {
+                    val lastItem = state.lastItemOrNull()
+                    if (lastItem == null) {
+                        return MediatorResult.Success(endOfPaginationReached = true)
+                    } else {
+                        (lastItem.ID_Estate / state.config.pageSize) + 1
                     }
+                }
             }
+
             delay(2000)
 
-            val estates = estateApi.getEstatesMainPage(page = loadKey, items_per_page = state.config.pageSize, _searchQuery.value) //лист из api
-            estateDb.withTransaction { //with transaction для нескольких команд sql (либо все будут выполнены, либо ни одна)
-                if(loadType == LoadType.REFRESH){ //очистка кэша при обновлении
-                    estateDb.dao.clearAll()
-                }   //it - это каждый элемннт списка estates
-                val estatesEntites = estates.map{it.toEstateMainEntity()} //изменение листа в лист записей для бд
-                estateDb.dao.upsertAll(estatesEntites)
-            }
-            MediatorResult.Success(
-                endOfPaginationReached = estates.isEmpty() //проверка api листа на пустоту
+            val response: Response<List<EstatesMainDto>> = estateApi.getEstatesMainPage(
+                page = loadKey,
+                items_per_page = state.config.pageSize,
+                name = _searchQuery.value
             )
 
-        }
-        catch (e: IOException){ // ошибка при чтении-записи
+            if (response.isSuccessful) {
+                val estates = response.body()
+                estateDb.withTransaction {
+                    val estatesEntities = estates?.map { it.toEstateMainEntity() }
+                    estateDb.dao.upsertAll(estatesEntities ?: emptyList())
+                }
+                MediatorResult.Success(
+                    endOfPaginationReached = estates.isNullOrEmpty()
+                )
+            } else {
+                val errorMessage = response.errorBody()?.string() ?: "Unknown error"
+                MediatorResult.Error(IOException("Failed to load data: ${response.code()}. Error message: $errorMessage"))
+            }
+        } catch (e: IOException){
             MediatorResult.Error(e)
-
-        }
-        catch (e: HttpException){
+        } catch (e: HttpException){
             MediatorResult.Error(e)
         }
     }
-
 }
